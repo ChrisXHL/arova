@@ -1,0 +1,96 @@
+{
+  "name": "goal-mode-pi",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "A local execution and verification workspace for Pi coding agents.",
+  "author": "Arova contributors",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ChrisXHL/arova.git"
+  },
+  "bugs": {
+    "url": "https://github.com/ChrisXHL/arova/issues"
+  },
+  "homepage": "https://github.com/ChrisXHL/arova#readme",
+  "scripts": {
+    "start": "node --experimental-strip-types src/main.ts",
+    "typecheck": "tsc --noEmit",
+		"test": "node --experimental-strip-types --test --test-concurrency=1 tests/*.test.mjs",
+		"test:queue": "node --experimental-strip-types --test --test-concurrency=1 tests/queue-*.test.mjs tests/provider-limiter.test.mjs",
+    "ui": "node --experimental-strip-types src/server.ts",
+    "ui:demo": "DEMO=1 node --experimental-strip-types src/server.ts",
+    "app": "electron electron/main.cjs",
+    "dist": "electron-builder --mac dir",
+    "dist:dmg": "electron-builder --mac dmg",
+    "loop": "node --experimental-strip-types src/loop.ts",
+    "eval": "node --experimental-strip-types evals/run.ts",
+		"test:tc": "node --experimental-strip-types tests/thinking-chain.test.mjs",
+		"test:audit": "node --experimental-strip-types tests/reasoning-audit-gate.test.mjs",
+		"test:resume": "node --experimental-strip-types tests/session-watch-resume.test.mjs",
+		"test:session-reuse": "node --experimental-strip-types tests/session-reuse.test.mjs",
+		"test:session-title": "node --experimental-strip-types tests/session-title.test.mjs",
+		"test:project-list": "node tests/project-list-retry.test.mjs",
+		"test:context": "node --experimental-strip-types tests/context-coordination.test.mjs",
+		"test:transcript": "node --experimental-strip-types tests/transcript-pagination.test.mjs",
+		"test:cancel": "node --experimental-strip-types tests/supervisor-cancel.test.mjs",
+		"test:session-layout": "node tests/single-session-layout.test.mjs",
+		"test:supervisor-history": "node --experimental-strip-types tests/supervisor-history.test.mjs",
+		"test:file-drop": "node tests/file-drop-subframe.test.mjs",
+		"test:file-drop-runtime": "electron tests/electron-subframe-preload-smoke.cjs",
+		"test:pi-version": "node --experimental-strip-types tests/local-pi-version.test.mjs",
+		"test:concurrent": "node --experimental-strip-types tests/concurrent-runs.test.mjs",
+		"test:voice": "node --experimental-strip-types tests/human-voice-policy.test.mjs",
+		"test:capabilities": "node --experimental-strip-types tests/capability-catalog.test.mjs",
+		"test:task-contract": "node --experimental-strip-types tests/task-contract.test.mjs",
+		"test:escape-cancel": "node tests/escape-cancel.test.mjs",
+		"test:compaction-preflight": "node --experimental-strip-types tests/compaction-preflight.test.mjs",
+		"test:progressive-plan": "node --experimental-strip-types tests/progressive-plan.test.mjs",
+		"test:shift-enter": "node tests/shift-enter.test.mjs",
+		"test:goal-ledger": "node --experimental-strip-types tests/goal-ledger.test.mjs"
+  },
+  "build": {
+    "appId": "com.arova.app",
+    "productName": "Arova",
+    "asar": false,
+    "npmRebuild": false,
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "electron/**/*",
+      "src/**/*",
+      "renderer/**/*",
+      "package.json",
+      "!**/*.map",
+      "!src/e2e.ts",
+      "!src/smoke.ts"
+    ],
+    "mac": {
+      "target": "dir",
+      "identity": null,
+      "category": "public.app-category.developer-tools"
+    }
+  },
+  "dependencies": {
+    "@earendil-works/pi-ai": "0.80.2",
+    "@earendil-works/pi-coding-agent": "0.80.2",
+    "@xterm/addon-fit": "^0.11.0",
+    "@xterm/xterm": "^6.0.0",
+    "node-pty": "^1.1.0",
+    "typebox": "1.3.1",
+    "ws": "^8.21.0"
+  },
+  "devDependencies": {
+    "@types/node": "^26.0.1",
+    "@types/ws": "^8.18.1",
+    "electron": "^42.5.0",
+    "electron-builder": "^26.15.3",
+    "typescript": "^5.6.0"
+  },
+  "main": "electron/main.cjs",
+  "overrides": {
+    "@noble/hashes": "^1.4.0"
+  }
+}

@@ -1,0 +1,27 @@
+# Local runtime data and personal configuration
+.goal-mode-pi/
+.claude/
+.env
+.env.*
+!.env.example
+*.pem
+*.p12
+*.key
+**/SKILL.md
+
+# Dependencies and macOS metadata
+node_modules/
+.DS_Store
+npm-debug.log*
+
+# Local build output and release artifacts
+dist/
+dist-*/
+release/
+
+# Internal planning and generated evaluation notes
+findings.md
+progress.md
+task_plan.md
+queue-architecture-plan.md
+evals/results/

@@ -1,0 +1,36 @@
+import { mkdtempSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
+
+const root = join(dirname(fileURLToPath(import.meta.url)), "..");
+const { freezeProblem, implementationProblem, loadProductRequirements, saveProductRequirements } = await import(join(root, "src/product-requirement-ledger.ts"));
+const { createSupervisorExtension } = await import(join(root, "src/supervisor-extension.ts"));
+const { loadState } = await import(join(root, "src/state.ts"));
+const executorExtension = (await import(join(root, "src/thinking-chain-extension.ts"))).default;
+const work = mkdtempSync(join(tmpdir(), "gm-product-"));
+let ok = 0, bad = 0;
+const t = (name, pass) => pass ? ok++ : (bad++, console.log("❌", name));
+const requirement = { id: "REQ-1", title: "需求证据面板", user_problem: "产品负责人无法确认需求是否已验证", hypothesis: "可追溯证据面板会减少伪需求进入编码", evidence: "三次需求评审均因证据散乱返工", counter_evidence: "小型修复任务不需要完整面板", metric: "需求返工率下降 30%", acceptance: "能查看需求证据、反证和冻结状态", non_goal: "本期不做跨团队权限管理" };
+const state = loadState({ taskId: "p1", contractVersion: 1, goal: "验证产品需求后实现需求证据面板", workdir: work, testCmd: "" });
+const tools = new Map(); createSupervisorExtension(state, () => {})({ registerTool: (tool) => tools.set(tool.name, tool) });
+const text = (r) => r.content[0].text;
+t("产品需求工具已注册", ["set_product_requirement_ledger", "freeze_product_requirements", "link_requirement_implementation"].every((name) => tools.has(name)));
+t("缺少产品账本不能冻结", freezeProblem(loadProductRequirements(work), "p1", 1).includes("尚未建立"));
+t("建立完整需求账本", text(await tools.get("set_product_requirement_ledger").execute("1", { requirements: [requirement] })).includes("已建立"));
+t("冻结前不可进入编码", freezeProblem(loadProductRequirements(work), "p1", 1).includes("尚未冻结"));
+t("监督冻结需求", text(await tools.get("freeze_product_requirements").execute("2", { reason: "已检查用户问题、支持证据、反证、指标、验收标准和非目标范围，当前证据足以进入最小实现。" })).includes("已冻结"));
+t("冻结但未追溯实现不能完成", implementationProblem(loadProductRequirements(work), "p1", 1).includes("代码与测试追溯"));
+t("需求必须关联代码与测试", text(await tools.get("link_requirement_implementation").execute("3", { requirement_id: "REQ-1", code_evidence: "src/requirement-panel.ts 实现证据面板状态渲染", test_evidence: "tests/requirement-panel.test.mjs 覆盖冻结与反证展示" })).includes("已建立") && !implementationProblem(loadProductRequirements(work), "p1", 1));
+
+const executorWork = mkdtempSync(join(tmpdir(), "gm-product-executor-"));
+const handlers = {}, executorTools = new Map(); executorExtension({ on: (name, handler) => (handlers[name] = handler), registerTool: (tool) => executorTools.set(tool.name, tool), getCommands: () => [] });
+handlers.session_start({ cwd: executorWork }); handlers.input({ text: "实现产品需求证据面板并写代码" });
+await executorTools.get("plan_work").execute("plan", { items: [{ id: "requirements", title: "冻结产品需求", objective: "建立证据、反证和验收合同", depends_on: [], done_when: "需求被冻结" }, { id: "implementation", title: "实现需求面板", objective: "将冻结需求映射到代码", depends_on: ["requirements"], done_when: "代码与测试完成" }], current_id: "requirements" });
+const focus = executorTools.get("focus_step");
+await focus.execute("f", { point: "先实现需求证据面板的单一状态读取", first_principle: "未经验证且未冻结的需求不应进入任何实现代码", variables: ["冻结状态", "需求证据"], calculation: "冻结状态为真且存在支持证据时才允许进入编码", output: "给出允许编码或阻止编码的明确判定", baseline: "没有冻结记录和证据时一律阻止任何代码写入", done_when: "每次代码写入前均能判断该需求是否已经冻结", not_doing: ["暂不做完整界面"], next_trigger: "产品需求完成冻结并记录验收标准后才实现渲染" });
+const codeBlock = handlers.tool_call({ toolName: "write", input: { path: "/tmp/panel.ts", content: "export const panel = true" } });
+t("执行端代码写入被需求冻结门阻止", codeBlock?.reason.includes("freeze_product_requirements"));
+rmSync(work, { recursive: true, force: true }); rmSync(executorWork, { recursive: true, force: true });
+console.log(bad ? `❌ ${bad} 项失败` : `✅ 产品需求冻结门：全部 ${ok} 项通过`);
+process.exit(bad ? 1 : 0);
